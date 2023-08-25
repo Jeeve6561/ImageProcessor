@@ -128,9 +128,9 @@ def apply_per_pixel(image, func):
 ########################
 
 
-def correlate(image, kernel):
+def multiply(image, kernel):
     """
-    This computes the result of correlating the given image with the given kernel.
+    This computes the result of multiplying the given image with the given kernel.
 
     The output of this function is an image (a dictionary with 'height', 'width', 
     and 'pixels' keys), but its pixel values are not necessarily in the range [0,255].
@@ -337,7 +337,7 @@ def blurred(image, n):
     """
     kernel = {'size': n, 'values': [1/(n**2)]*(n**2)}
 
-    blurred_image = correlate(image, kernel)
+    blurred_image = multiply(image, kernel)
 
     round_and_clip_image(blurred_image)
     return blurred_image
@@ -347,28 +347,28 @@ def sharpened(image, n):
     """
     This takes in the image (image) and the size (n) of the kernel and creates the
     special kernel required to directly sharpen the image. It's just 2 subtracting the 
-    middle value and zero subtracting the rest. This is then used for correlating
+    middle value and zero subtracting the rest. This is then used for multiplying
     and the final image is rounded and clipped.
     """
     # Since n would be odd, we take an integer divide of the first n/2 values
     kernel = {'size': n, 'values': [-1/(n**2)]*((n**2)//2) +
               [2 - 1/(n**2)] + [-1/(n**2)]*((n**2)//2)}
-    sharp_image = correlate(image, kernel)
+    sharp_image = multiply(image, kernel)
     round_and_clip_image(sharp_image)
     return sharp_image
 
 
 def edges(image):
     """
-    We take an image (image), correlate it with two kernels (kernel_x and kernel_y),
+    We take an image (image), multiply it with two kernels (kernel_x and kernel_y),
     and then take the root of the sum of the squares of each output image from 
     the kernels and use that as the final pixel values in the final image. We 
     then round and clip the final values before returning it.
     """
     kernel_x = {'size': 3, 'values': [-1, 0, 1, -2, 0, 2, -1, 0, 1]}
     kernel_y = {'size': 3, 'values': [-1, -2, -1, 0, 0, 0, 1, 2, 1]}
-    o_x = correlate(image, kernel_x)
-    o_y = correlate(image, kernel_y)
+    o_x = multiply(image, kernel_x)
+    o_y = multiply(image, kernel_y)
     pixels = []
     for pos in range(len(o_x['pixels'])):
         pixels.append(((o_x['pixels'][pos])**2 + (o_y['pixels'][pos])**2)**0.5)
@@ -538,7 +538,7 @@ def make_one_color(image, color):
 
 if __name__ == '__main__':
     bluegill = load_greyscale_image('test_images/bluegill.png')
-    save_greyscale_image(inverted(bluegill), 'questions/bluegill_inverted.png')
+    save_greyscale_image(inverted(bluegill), 'image_results/bluegill_inverted.png')
 
     pigbird = load_greyscale_image('test_images/pigbird.png')
     pigbird_kernel = {'size': 9, 'values': [0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -551,74 +551,77 @@ if __name__ == '__main__':
                                             0, 0, 0, 0, 0, 0, 0, 0, 0,
                                             0, 0, 0, 0, 0, 0, 0, 0, 0, ]
                       }
-    pigbird_test = correlate(pigbird, pigbird_kernel)
+    pigbird_test = multiply(pigbird, pigbird_kernel)
     round_and_clip_image(pigbird_test)
-    save_greyscale_image(pigbird_test, 'questions/pigbird_correlate.png')
+    save_greyscale_image(pigbird_test, 'image_results/pigbird_multiply.png')
 
     cat = load_greyscale_image('test_images/cat.png')
-    save_greyscale_image(blurred(cat, 5), 'questions/blurred_cat.png')
+    save_greyscale_image(blurred(cat, 5), 'image_results/blurred_cat.png')
 
     python = load_greyscale_image('test_images/python.png')
     save_greyscale_image(sharpened(python, 11),
-                         'questions/sharpened_python.png')
+                         'image_results/sharpened_python.png')
 
     construct = load_greyscale_image('test_images/construct.png')
-    save_greyscale_image(edges(construct), 'questions/edges_construct.png')
+    save_greyscale_image(edges(construct), 'image_results/edges_construct.png')
+    
+    chess = load_greyscale_image('test_images/chess.png')
+    save_greyscale_image(edges(chess), 'image_results/edges_chess.png')
 
     cat = load_color_image('test_images/cat.png')
     inverted_color = color_filter_from_greyscale_filter(inverted)
     cat_inverted = inverted_color(cat)
-    save_color_image(cat_inverted, 'questions/inverted_cat.png')
+    save_color_image(cat_inverted, 'image_results/inverted_cat.png')
 
     python = load_color_image('test_images/python.png')
     blurry9 = make_blur_filter(9)
     blurry9_color = color_filter_from_greyscale_filter(blurry9)
     blurry_python = blurry9_color(python)
-    save_color_image(blurry_python, 'questions/blurry_python.png')
+    save_color_image(blurry_python, 'image_results/blurry_python.png')
 
     chick = load_color_image('test_images/sparrowchick.png')
     sharp7 = make_sharpen_filter(7)
     sharp7_color = color_filter_from_greyscale_filter(sharp7)
     sharp_chick = sharp7_color(chick)
-    save_color_image(sharp_chick, 'questions/sharpened_sparrowchick.png')
+    save_color_image(sharp_chick, 'image_results/sharpened_sparrowchick.png')
 
     frog = load_color_image('test_images/frog.png')
     filter1 = color_filter_from_greyscale_filter(edges)
     filter2 = color_filter_from_greyscale_filter(make_blur_filter(5))
     filt = filter_cascade([filter1, filter1, filter2, filter1])
     filtered_frog = filt(frog)
-    save_color_image(filtered_frog, 'questions/filtered_frog.png')
+    save_color_image(filtered_frog, 'image_results/filtered_frog.png')
 
     twocats = load_color_image('test_images/twocats.png')
     carved_twocats = seam_carving(twocats, 100)
-    save_color_image(carved_twocats, 'questions/carved_twocats.png')
+    save_color_image(carved_twocats, 'image_results/carved_twocats.png')
 
     bluegill = load_color_image('test_images/bluegill.png')
     bluegill_darkened1 = darken_color_image(bluegill)
     bluegill_darkened2 = darken_color_image(bluegill_darkened1)
     bluegill_darkened3 = darken_color_image(bluegill_darkened2)
     save_color_image(bluegill_darkened1,
-                     'demonstration/bluegill_darkended1.png')
+                     'image_results/bluegill_darkended1.png')
     save_color_image(bluegill_darkened2,
-                     'demonstration/bluegill_darkended2.png')
+                     'image_results/bluegill_darkended2.png')
     save_color_image(bluegill_darkened3,
-                     'demonstration/bluegill_darkended3.png')
+                     'image_results/bluegill_darkended3.png')
 
     bluegill_lightened1 = lighten_color_image(bluegill)
     bluegill_lightened2 = lighten_color_image(bluegill_lightened1)
     bluegill_lightened3 = lighten_color_image(bluegill_lightened2)
     save_color_image(bluegill_lightened1,
-                     'demonstration/bluegill_lightended1.png')
+                     'image_results/bluegill_lightended1.png')
     save_color_image(bluegill_lightened2,
-                     'demonstration/bluegill_lightended2.png')
+                     'image_results/bluegill_lightended2.png')
     save_color_image(bluegill_lightened3,
-                     'demonstration/bluegill_lightended3.png')
+                     'image_results/bluegill_lightended3.png')
 
     red_bluegill = make_one_color(bluegill, 'r')
     green_bluegill = make_one_color(bluegill, 'g')
     blue_bluegill = make_one_color(bluegill, 'b')
-    save_color_image(red_bluegill, 'demonstration/bluegill_turned_red.png')
-    save_color_image(green_bluegill, 'demonstration/bluegill_turned_green.png')
-    save_color_image(blue_bluegill, 'demonstration/bluegill_turned_blue.png')
+    save_color_image(red_bluegill, 'image_results/bluegill_turned_red.png')
+    save_color_image(green_bluegill, 'image_results/bluegill_turned_green.png')
+    save_color_image(blue_bluegill, 'image_results/bluegill_turned_blue.png')
 
     pass
